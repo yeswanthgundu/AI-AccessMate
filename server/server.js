@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import authRoutes from "./routes/authRoutes.js";
@@ -59,15 +60,25 @@ app.use("/api/user", userRoutes);
 app.use("/api/history", userRoutes);
 app.use("/api/ai", aiRoutes);
 
-// Root route
-app.get("/", (req, res) => {
-  res.json({
-    message: "AI AccessMate API Server is operational.",
-    documentation: "/api/health",
+// Serve client static build if present (Unified Full-Stack Deployment / Render)
+const clientDistPath = path.resolve(__dirname, "../client/dist");
+if (fs.existsSync(clientDistPath)) {
+  app.use(express.static(clientDistPath));
+  app.get("*", (req, res, next) => {
+    if (req.originalUrl.startsWith("/api")) return next();
+    res.sendFile(path.join(clientDistPath, "index.html"));
   });
-});
+} else {
+  // Root route fallback when client is served by dev server
+  app.get("/", (req, res) => {
+    res.json({
+      message: "AI AccessMate API Server is operational.",
+      documentation: "/api/health",
+    });
+  });
+}
 
-// Global 404 Handler
+// Global 404 Handler for API routes
 app.use((req, res) => {
   res.status(404).json({
     success: false,
