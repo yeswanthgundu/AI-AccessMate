@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-scale: 1rem;
+    --line-spacing: 1.6;
+    --letter-spacing: normal;
+  }
+
+  body {
+    font-size: var(--font-scale);
+    line-height: var(--line-spacing);
+    letter-spacing: var(--letter-spacing);
+  }
+
+  /* Universal high-visibility focus indicator for WCAG AAA */
+  *:focus-visible {
+    outline: 3px solid #ffea00 !important;
+    outline-offset: 3px !important;
+  }
+}
+
+/* ==========================================================================
+   ABILITY PROFILE STYLES
+   ========================================================================== */
+
+/* 1. Dyslexia Profile: open letter spacing, higher line height, clear typography */
+body.profile-dyslexia {
+  font-family: "Atkinson Hyperlegible", "Comic Sans MS", Arial, sans-serif !important;
+  --letter-spacing: 0.08em;
+  --line-spacing: 2.1;
+  word-spacing: 0.16em;
+}
+
+body.profile-dyslexia p,
+body.profile-dyslexia span,
+body.profile-dyslexia li {
+  line-height: 2.2 !important;
+}
+
+/* 2. Low Vision Profile: Max contrast, stark yellow accents, bold borders */
+body.profile-low-vision {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  font-size: 1.25rem !important;
+}
+
+body.profile-low-vision .card-contrast {
+  background-color: #0d0d0d !important;
+  border: 2px solid #ffea00 !important;
+  color: #ffffff !important;
+}
+
+body.profile-low-vision button,
+body.profile-low-vision input,
+body.profile-low-vision select,
+body.profile-low-vision textarea {
+  border: 2px solid #ffea00 !important;
+  color: #ffffff !important;
+  background-color: #000000 !important;
+}
+
+body.profile-low-vision .badge-accent {
+  background-color: #ffea00 !important;
+  color: #000000 !important;
+  font-weight: 800 !important;
+}
+
+/* 3. Cognitive / ADHD Profile: Minimal distraction, bionic highlight */
+body.profile-adhd {
+  background-color: #090d16 !important;
+}
+
+body.profile-adhd .adhd-dim {
+  opacity: 0.35;
+  transition: opacity 0.2s ease;
+}
+
+body.profile-adhd .adhd-dim:hover {
+  opacity: 1;
+}
+
+/* 4. Elderly Profile: Large click targets, clear labels, calm contrast */
+body.profile-elderly {
+  font-size: 1.2rem;
+  --line-spacing: 1.85;
+}
+
+body.profile-elderly button,
+body.profile-elderly a {
+  min-height: 52px;
+  min-width: 52px;
+}
+
+/* 5. Deaf & Hard of Hearing Profile: Visual sound cues, zero audio dependency */
+body.profile-deaf .sound-wave-indicator {
+  display: inline-flex !important;
+}
+
+/* ==========================================================================
+   TTS SPEECH WORD HIGHLIGHT
+   ========================================================================== */
+.tts-word-highlight {
+  background-color: #ffea00 !important;
+  color: #000000 !important;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(255, 234, 0, 0.6);
+  transition: all 0.1s ease;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}

@@ -1,0 +1,95 @@
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
+import authRoutes from "./routes/authRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js";
+import { db } from "./database/db.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Middleware
+app.use(
+  cors({
+    origin: "*", // allow all origins for dev / local / preview
+    credentials: true,
+  })
+);
+app.use(express.json({ limit: "25mb" }));
+app.use(express.urlencoded({ extended: true, limit: "25mb" }));
+
+// Request logging in development
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+    if (req.originalUrl.startsWith("/api")) {
+      console.log(`[${req.method}] ${req.originalUrl} - ${res.statusCode} (${duration}ms)`);
+    }
+  });
+  next();
+});
+
+// Health & Diagnostic Endpoint
+app.get("/api/health", async (req, res) => {
+  const supabaseConnected = await db.isSupabaseConnected();
+  res.json({
+    status: "ok",
+    service: "AI AccessMate Backend API",
+    version: "1.0.0",
+    database: supabaseConnected ? "Supabase Cloud PostgreSQL" : "Local PostgreSQL/Store Fallback",
+    supabaseConfigured: Boolean(process.env.SUPABASE_URL),
+    geminiConfigured: Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== "your_gemini_api_key_here"),
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Mount Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/history", userRoutes);
+app.use("/api/ai", aiRoutes);
+
+// Root route
+app.get("/", (req, res) => {
+  res.json({
+    message: "AI AccessMate API Server is operational.",
+    documentation: "/api/health",
+  });
+});
+
+// Global 404 Handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    error: `API route not found: ${req.method} ${req.originalUrl}`,
+  });
+});
+
+// Centralized Error Handler
+app.use((err, req, res, next) => {
+  console.error("Unhandled Server Error:", err);
+  res.status(500).json({
+    success: false,
+    error: err.message || "Internal server error occurred.",
+  });
+});
+
+// Start Server
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`\n======================================================`);
+  console.log(`🚀 AI AccessMate Server running on http://localhost:${PORT}`);
+  console.log(`🔗 Health Check: http://localhost:${PORT}/api/health`);
+  console.log(`======================================================\n`);
+});
+
+export default app;

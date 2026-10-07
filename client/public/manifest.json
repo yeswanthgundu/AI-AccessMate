@@ -1,0 +1,18 @@
+{
+  "short_name": "AccessMate",
+  "name": "AI AccessMate — AI-Powered Accessibility & Inclusion Assistant",
+  "description": "See it. Understand it. Decide what to do. Hear it. Act on it.",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#09090b",
+  "theme_color": "#4f46e5",
+  "display": "standalone",
+  "orientation": "portrait"
+}
