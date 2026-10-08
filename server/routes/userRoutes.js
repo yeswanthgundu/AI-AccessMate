@@ -13,8 +13,10 @@ const router = Router();
 router.get("/profile", authenticateToken, getProfile);
 router.put("/preferences", authenticateToken, updatePreferences);
 
-// History
+// History (supports /api/history and /api/user/history)
 router.get("/history", authenticateToken, getHistory);
 router.delete("/history/:id", authenticateToken, deleteHistory);
+router.get("/", authenticateToken, getHistory);
+router.delete("/:id", authenticateToken, deleteHistory);
 
 export default router;

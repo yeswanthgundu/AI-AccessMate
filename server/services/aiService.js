@@ -75,53 +75,42 @@ export function calculateReadability(text) {
   };
 }
 
+const GEMINI_MODELS = ["gemini-3.5-flash-lite", "gemini-flash-latest", "gemini-3.5-flash"];
+
 // Helper to call Gemini structured or fallback cleanly
 export async function callGeminiStructured(prompt, schemaDefinition = null) {
   if (apiKey && apiKey.trim() !== "" && apiKey !== "your_gemini_api_key_here") {
-    try {
-      // Try official @google/genai first
-      if (googleGenAiClient?.models?.generateContent) {
-        const config = {
-          temperature: 0.2,
-          systemInstruction: SYSTEM_PROMPT,
-        };
-        if (schemaDefinition) {
-          config.responseMimeType = "application/json";
-          config.responseSchema = schemaDefinition;
-        }
-
-        const response = await googleGenAiClient.models.generateContent({
-          model: "gemini-2.5-flash",
-          contents: prompt,
-          config,
-        });
-
-        const text = response.text;
-        try {
-          return JSON.parse(text);
-        } catch {
-          // If markdown-wrapped json
-          const cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
-          return JSON.parse(cleaned);
-        }
-      }
-
-      // Try @google/generative-ai
-      if (googleGenerativeAiClient) {
-        const model = googleGenerativeAiClient.getGenerativeModel({
-          model: "gemini-1.5-flash",
-          generationConfig: {
+    for (const model of GEMINI_MODELS) {
+      try {
+        if (googleGenAiClient?.models?.generateContent) {
+          const config = {
             temperature: 0.2,
-            responseMimeType: "application/json",
-          },
-        });
-        const res = await model.generateContent(`${SYSTEM_PROMPT}\n\nTask:\n${prompt}`);
-        const text = res.response.text();
-        const cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
-        return JSON.parse(cleaned);
+            systemInstruction: SYSTEM_PROMPT,
+          };
+          if (schemaDefinition) {
+            config.responseMimeType = "application/json";
+            config.responseSchema = schemaDefinition;
+          } else {
+            config.responseMimeType = "application/json";
+          }
+
+          const response = await googleGenAiClient.models.generateContent({
+            model,
+            contents: prompt,
+            config,
+          });
+
+          const text = response.text || "";
+          try {
+            return JSON.parse(text);
+          } catch {
+            const cleaned = text.replace(/```json/gi, "").replace(/```/g, "").trim();
+            return JSON.parse(cleaned);
+          }
+        }
+      } catch (err) {
+        console.warn(`Gemini (${model}) failed, trying next model:`, err.message);
       }
-    } catch (err) {
-      console.warn("Gemini API call failed or timed out, executing intelligent fallback engine:", err.message);
     }
   }
 
@@ -524,26 +513,34 @@ Return JSON:
 }`;
 
   if (apiKey && apiKey.trim() !== "" && apiKey !== "your_gemini_api_key_here") {
-    try {
-      if (googleGenerativeAiClient) {
-        const model = googleGenerativeAiClient.getGenerativeModel({ model: "gemini-1.5-flash" });
-        const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, "");
-        const imagePart = {
-          inlineData: {
-            data: cleanBase64,
-            mimeType,
-          },
-        };
-        const result = await model.generateContent([
-          `${SYSTEM_PROMPT}\n\n${prompt}`,
-          imagePart,
-        ]);
-        const text = result.response.text().replace(/```json/g, "").replace(/```/g, "").trim();
-        const parsed = JSON.parse(text);
-        return { ...parsed, disclaimer: DISCLAIMER };
+    const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, "");
+    for (const model of GEMINI_MODELS) {
+      try {
+        if (googleGenAiClient?.models?.generateContent) {
+          const result = await googleGenAiClient.models.generateContent({
+            model,
+            contents: [
+              { text: `${SYSTEM_PROMPT}\n\n${prompt}` },
+              {
+                inlineData: {
+                  data: cleanBase64,
+                  mimeType,
+                },
+              },
+            ],
+            config: {
+              temperature: 0.2,
+              responseMimeType: "application/json",
+            },
+          });
+          const text = result.text || "";
+          const cleaned = text.replace(/```json/gi, "").replace(/```/g, "").trim();
+          const parsed = JSON.parse(cleaned);
+          return { ...parsed, disclaimer: DISCLAIMER };
+        }
+      } catch (e) {
+        console.warn(`Vision Gemini (${model}) processing failed, trying next:`, e.message);
       }
-    } catch (e) {
-      console.warn("Vision Gemini processing failed, using fallback:", e.message);
     }
   }
 
@@ -835,17 +832,21 @@ CRITICAL RULES:
 2. Keep the answer brief, empathetic, and formatted in easy-to-read bullet points or simple sentences.`;
 
   if (apiKey && apiKey.trim() !== "" && apiKey !== "your_gemini_api_key_here") {
-    try {
-      if (googleGenerativeAiClient) {
-        const model = googleGenerativeAiClient.getGenerativeModel({ model: "gemini-1.5-flash" });
-        const res = await model.generateContent(`${SYSTEM_PROMPT}\n\n${prompt}`);
-        return {
-          answer: res.response.text(),
-          disclaimer: DISCLAIMER,
-        };
+    for (const model of GEMINI_MODELS) {
+      try {
+        if (googleGenAiClient?.models?.generateContent) {
+          const res = await googleGenAiClient.models.generateContent({
+            model,
+            contents: `${SYSTEM_PROMPT}\n\n${prompt}`,
+          });
+          return {
+            answer: res.text || "",
+            disclaimer: DISCLAIMER,
+          };
+        }
+      } catch (e) {
+        console.warn(`Contextual Q&A Gemini (${model}) call failed:`, e.message);
       }
-    } catch (e) {
-      console.warn("Contextual Q&A Gemini call failed:", e.message);
     }
   }
 
