@@ -1,8 +1,16 @@
 import axios from "axios";
 
-const API_BASE =
-  import.meta.env.VITE_API_URL ||
-  (import.meta.env.PROD ? "/api" : "http://localhost:5000/api");
+// Robust API base URL resolver: ensures /api is always included regardless of how VITE_API_URL is configured
+function getApiBase() {
+  const envUrl = (import.meta.env.VITE_API_URL || "").trim();
+  if (envUrl) {
+    // If user provided a base URL ending in /api, use it; otherwise append /api
+    return envUrl.endsWith("/api") ? envUrl : `${envUrl.replace(/\/+$/, "")}/api`;
+  }
+  return import.meta.env.PROD ? "/api" : "http://localhost:5000/api";
+}
+
+const API_BASE = getApiBase();
 
 export const api = axios.create({
   baseURL: API_BASE,

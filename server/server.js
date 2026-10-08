@@ -54,18 +54,33 @@ app.get("/api/health", async (req, res) => {
   });
 });
 
-// Mount Routes
+// Mount Routes (supporting both /api/* standard and /* fallback)
 app.use("/api/auth", authRoutes);
+app.use("/auth", authRoutes);
+
 app.use("/api/user", userRoutes);
+app.use("/user", userRoutes);
+
 app.use("/api/history", userRoutes);
+app.use("/history", userRoutes);
+
 app.use("/api/ai", aiRoutes);
+app.use("/ai", aiRoutes);
 
 // Serve client static build if present (Unified Full-Stack Deployment / Render)
 const clientDistPath = path.resolve(__dirname, "../client/dist");
 if (fs.existsSync(clientDistPath)) {
   app.use(express.static(clientDistPath));
   app.get("*", (req, res, next) => {
-    if (req.originalUrl.startsWith("/api")) return next();
+    if (
+      req.originalUrl.startsWith("/api") ||
+      req.originalUrl.startsWith("/ai") ||
+      req.originalUrl.startsWith("/auth") ||
+      req.originalUrl.startsWith("/user") ||
+      req.originalUrl.startsWith("/history")
+    ) {
+      return next();
+    }
     res.sendFile(path.join(clientDistPath, "index.html"));
   });
 } else {
